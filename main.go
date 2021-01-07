@@ -16,6 +16,7 @@ import (
 )
 
 var (
+	log      *string = flag.String("log", "stdout", "Logfile")
 	logLevel *string = flag.String("logLevel", "info", "Log level (e.g. error, info, debug, trace)")
 	apiPort  *int    = flag.Int("apiPort", 8088, "Port to serve http api requests")
 )
@@ -34,7 +35,19 @@ func init() {
 	}
 
 	logrus.SetLevel(ll)
+
+	if *log != "stdout" {
+		lf, err := os.OpenFile(*log, os.O_RDWR|os.O_CREATE, 0666)
+		if err != nil {
+			logrus.WithError(err).Panic()
+		}
+
+		logrus.SetOutput(lf)
+	}
+
 	logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+
+	logrus.Infof("log level is set to '%s'", logrus.GetLevel().String())
 }
 
 func main() {
@@ -87,9 +100,9 @@ func run() error {
 
 	server := api.NewServer(&repository.Default)
 	go func() {
-		logrus.Infof("start api http server on :%d", apiPort)
+		logrus.Infof("start api http server on :%d", *apiPort)
 
-		err := http.ListenAndServe(fmt.Sprintf(":%d", apiPort), server)
+		err := http.ListenAndServe(fmt.Sprintf(":%d", *apiPort), server)
 		if err != nil && err != http.ErrServerClosed {
 			logrus.WithError(err).Error("error running api http server")
 		}

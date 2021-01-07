@@ -107,7 +107,7 @@ func (c Console) processRequestFrame() {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"typeID":   fmt.Sprintf("%02x", request.TypeID),
+		"typeID":   request.TypeID,
 		"data":     utils.Prettify(request.Data),
 		"deviceID": fmt.Sprintf("%04x", request.DeviceID),
 		"loggerID": request.LoggerID,
@@ -124,7 +124,7 @@ func (c Console) processRequestFrame() {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"typeID":   fmt.Sprintf("%02x", response.TypeID),
+		"typeID":   response.TypeID,
 		"data":     utils.Prettify(response.Data),
 		"deviceID": fmt.Sprintf("%04x", response.DeviceID),
 		"loggerID": response.LoggerID,

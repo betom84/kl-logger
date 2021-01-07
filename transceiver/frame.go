@@ -31,6 +31,43 @@ const (
 	RequestTimeResponse        TypeID = 0x53
 )
 
+func (t TypeID) String() string {
+	var s string
+
+	switch t {
+	case HistoryRequest:
+		s = "HistoryRequest"
+	case SetTimeRequest:
+		s = "SetTimeRequest"
+	case SetConfigRequest:
+		s = "SetConfigRequest"
+	case ConfigRequest:
+		s = "ConfigRequest"
+	case CurrentWeatherRequest:
+		s = "CurrentWeatherRequest"
+	case SendConfig: // ConfigResponse
+		s = "SendConfig/ConfigResponse"
+	case SendTime:
+		s = "SendTime"
+	case DataWrittenResponse:
+		s = "DataWrittenResponse"
+	case CurrentWeatherResponse:
+		s = "CurrentWeatherResponse"
+	case HistoryResponse:
+		s = "HistoryResponse"
+	case RequestHistoryResponse:
+		s = "RequestHistoryResponse"
+	case RequestFirstConfigResponse:
+		s = "RequestFirstConfigResponse"
+	case RequestConfigResponse:
+		s = "RequestConfigResponse"
+	case RequestTimeResponse:
+		s = "RequestTimeResponse"
+	}
+
+	return fmt.Sprintf("%s (0x%02x)", s, byte(t))
+}
+
 const frameByteLength = 273
 
 // Frame is send to or recieved from klimalogg console
@@ -44,7 +81,7 @@ type Frame struct {
 }
 
 func (f Frame) String() string {
-	return fmt.Sprintf("{MessageID:%02x Length:%d DeviceID:%04x LoggerID:%d TypeID:%02x}", f.MessageID, f.Length, f.DeviceID, f.LoggerID, f.TypeID)
+	return fmt.Sprintf("{MessageID:%s Length:%d DeviceID:0x%04x LoggerID:%02d TypeID:%s}", f.MessageID, f.Length, f.DeviceID, f.LoggerID, f.TypeID)
 }
 
 // UnmarshalBinary response from klimalogg console

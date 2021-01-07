@@ -32,7 +32,7 @@ DESC="klimalogg weather data logger"
 SCRIPTNAME=/etc/init.d/$NAME
 PIDFILE=$HOME/$NAME.pid
 DAEMON=$HOME/$NAME
-DAEMON_ARGS="" 
+DAEMON_ARGS="-logLevel info -log {$DAEMON}.log" 
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0

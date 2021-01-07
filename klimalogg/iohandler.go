@@ -33,6 +33,8 @@ func (h IOHandler) HandleRequest(curr transceiver.Frame) (*transceiver.Frame, er
 		response, err = h.handleConfig(curr)
 	case transceiver.RequestFirstConfigResponse:
 		response, err = h.handleFirstConfig(curr)
+	default:
+		logrus.WithField("frame", curr).Warn("handle unsupported frame type")
 	}
 
 	if err != nil || response != nil {
