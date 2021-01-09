@@ -1,5 +1,7 @@
 package utils
 
+import "math"
+
 func ToHumidity(value byte) uint {
 	return uint(((uint8(value) >> 4) * 10) + (uint8(value) & 0xf))
 }
@@ -18,4 +20,14 @@ func ToTemperature(value []byte, startNibble uint) float32 {
 	}
 
 	return t - 40
+}
+
+// ToHexNumber creates a byte representation of a number without actually converting it.
+// E.g. number 25 will be transformed to 0x25 instead of 0x19. That only works for numbers >0 and <100.
+func ToHexNumber(number uint) byte {
+	if number >= 100 {
+		return 0x00
+	}
+
+	return byte((number % 10) + uint(16*math.Floor(float64(number)/10)))
 }

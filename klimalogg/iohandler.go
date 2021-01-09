@@ -2,6 +2,7 @@ package klimalogg
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/betom84/kl-logger/klimalogg/models"
 	"github.com/betom84/kl-logger/transceiver"
@@ -19,6 +20,8 @@ type IOHandler struct {
 	LoggerID    uint8
 	DeviceID    uint16
 	Repostitory Repository
+
+	cfgChecksum int
 }
 
 // HandleRequest from klimalogg console and create next frame to be send to klimalogg console
@@ -33,6 +36,8 @@ func (h IOHandler) HandleRequest(curr transceiver.Frame) (*transceiver.Frame, er
 		response, err = h.handleConfig(curr)
 	case transceiver.RequestFirstConfigResponse:
 		response, err = h.handleFirstConfig(curr)
+	case transceiver.RequestTimeResponse:
+		response, err = h.handleTime(curr)
 	default:
 		logrus.WithField("frame", curr).Warn("handle unsupported frame type")
 	}
@@ -79,6 +84,8 @@ func (h IOHandler) handleConfig(curr transceiver.Frame) (*transceiver.Frame, err
 		return nil, err
 	}
 
+	h.cfgChecksum = data.CfgChecksum
+
 	if h.Repostitory != nil {
 		s := data.Settings
 		h.Repostitory.UpdateSettings(s.Contrast, s.Alert, s.DCF, s.TimeFormat, s.TempFormat)
@@ -102,6 +109,19 @@ func (h IOHandler) handleFirstConfig(curr transceiver.Frame) (*transceiver.Frame
 		DeviceID: h.DeviceID,
 		LoggerID: h.LoggerID,
 	}
+
+	next.SetData(data)
+
+	return next, nil
+}
+
+func (h IOHandler) handleTime(curr transceiver.Frame) (*transceiver.Frame, error) {
+	next := &transceiver.Frame{}
+	next.DeviceID = curr.DeviceID
+	next.LoggerID = curr.LoggerID
+	next.TypeID = transceiver.SendTime
+
+	data := models.SendTimeData{CfgChecksum: uint16(h.cfgChecksum), Now: time.Now()}
 
 	next.SetData(data)
 
