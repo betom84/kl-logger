@@ -1,11 +1,11 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 )
 
 // Repository to retrieve weather data
@@ -17,43 +17,29 @@ type Repository interface {
 
 // Server for klimalogg api
 type Server struct {
-	router     *router
+	router     chi.Router
 	repository Repository
 }
 
 // NewServer to serve api endpoints
 func NewServer(repository Repository) *Server {
 	s := &Server{
-		router:     newRouter(),
 		repository: repository,
+		router:     chi.NewRouter(),
 	}
-	s.routes()
-	return s
-}
 
-func (s *Server) routes() {
-	s.router.get("/current", getCurrentWeather(s.repository))
+	s.router.Mount("/debug", middleware.Profiler())
+	s.router.Get("/current", getCurrentWeather(s.repository))
 
-	s.router.fallback = func(w http.ResponseWriter, r *http.Request) error {
+	s.router.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		w.Write([]byte("not found"))
+	})
 
-		return nil
-	}
+	return s
 }
 
 // ServeHTTP requests
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	err := s.router.serveHTTP(w, r)
-
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"error":   err,
-			"request": r,
-		}).Error("error handling http request")
-
-		w.Header().Add("content-type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf(`{ "error": "%s" }`, err.Error())))
-	}
+	s.router.ServeHTTP(w, r)
 }

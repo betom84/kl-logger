@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-func getCurrentWeather(repository Repository) handlerFuncWithError {
+func getCurrentWeather(repository Repository) http.HandlerFunc {
 	type response struct {
 		UpdatedAt   string  `json:"updatedAt"`
 		Temperature float32 `json:"temperature"`
 		Humidity    uint    `json:"humidity"`
 	}
 
-	return func(w http.ResponseWriter, r *http.Request) error {
+	return func(w http.ResponseWriter, r *http.Request) {
 		response := response{
 			Temperature: repository.Temperature(),
 			Humidity:    repository.Humidity(),
@@ -22,7 +22,5 @@ func getCurrentWeather(repository Repository) handlerFuncWithError {
 
 		json.NewEncoder(w).Encode(response)
 		w.Header().Set("Content-Type", "application/json")
-
-		return nil
 	}
 }
