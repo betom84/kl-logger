@@ -1,4 +1,5 @@
 /kl-logger
 /vendor
+/.vscode
 *.log
 *.pid

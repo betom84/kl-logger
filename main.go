@@ -11,7 +11,6 @@ import (
 	"github.com/betom84/kl-logger/api"
 	"github.com/betom84/kl-logger/klimalogg"
 	"github.com/betom84/kl-logger/repository"
-	"github.com/betom84/kl-logger/transceiver"
 	"github.com/sirupsen/logrus"
 )
 
@@ -60,7 +59,7 @@ func main() {
 }
 
 func run() error {
-	t := transceiver.NewTransceiver(0x6666, 0x5555)
+	t := klimalogg.NewTransceiver(0x6666, 0x5555)
 	err := t.Open()
 	if err != nil {
 		return err

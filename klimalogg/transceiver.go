@@ -1,4 +1,4 @@
-package transceiver
+package klimalogg
 
 import (
 	"encoding"
@@ -118,7 +118,7 @@ func (t Transceiver) Get(id MessageID) ([]byte, error) {
 
 	if id != GetState {
 		logrus.WithFields(logrus.Fields{
-			"id":   fmt.Sprintf("%02x", id),
+			"id":   fmt.Sprintf("%02x", byte(id)),
 			"len":  len,
 			"data": utils.Prettify(b),
 		}).Tracef("<- %s", id)
@@ -140,7 +140,7 @@ func (t Transceiver) Set(id MessageID, data []byte) error {
 	len, err := t.device.Control(m.rtype, m.request, m.value, m.index, b)
 
 	logrus.WithFields(logrus.Fields{
-		"id":   fmt.Sprintf("%02x", id),
+		"id":   fmt.Sprintf("%02x", byte(id)),
 		"len":  len,
 		"data": utils.Prettify(b),
 	}).Tracef("-> %s", id)

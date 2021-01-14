@@ -6,24 +6,23 @@ import (
 	"strings"
 	"time"
 
-	"github.com/betom84/kl-logger/transceiver"
-	"github.com/betom84/kl-logger/transceiver/ax5051"
-	"github.com/betom84/kl-logger/utils"
+	"github.com/betom84/kl-logger/klimalogg/ax5051"
+	"github.com/betom84/kl-logger/klimalogg/frames"
 	"github.com/sirupsen/logrus"
 )
 
 // Console represents a klimalogg console
 type Console struct {
 	LoggerID             uint8
-	transceiver          *transceiver.Transceiver
-	handler              IOHandler
+	transceiver          *Transceiver
+	handler              Handler
 	stopCommunication    chan bool
 	communicationRunning bool
 }
 
 // NewConsole using given transceiver
-func NewConsole(t *transceiver.Transceiver) *Console {
-	return &Console{transceiver: t, handler: IOHandler{}, LoggerID: 0}
+func NewConsole(t *Transceiver) *Console {
+	return &Console{transceiver: t, handler: Handler{}, LoggerID: 0}
 }
 
 // Initialise default klimalogg console (868MHz)
@@ -98,7 +97,7 @@ func (c *Console) StartCommunication() error {
 }
 
 func (c Console) processRequestFrame() {
-	request := transceiver.Frame{}
+	request := frames.NewGetFrame()
 	err := c.transceiver.GetFrame(&request)
 	if err != nil {
 		logrus.WithError(err).Error("unable to get request frame")
@@ -107,10 +106,9 @@ func (c Console) processRequestFrame() {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"typeID":   request.TypeID,
-		"data":     utils.Prettify(request.Data),
-		"deviceID": fmt.Sprintf("%04x", request.DeviceID),
-		"loggerID": request.LoggerID,
+		"typeID":   request.TypeID(),
+		"deviceID": fmt.Sprintf("%04x", request.DeviceID()),
+		"loggerID": request.LoggerID(),
 	}).Debug("handle frame")
 
 	response, err := c.handler.HandleRequest(request)
@@ -124,10 +122,9 @@ func (c Console) processRequestFrame() {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"typeID":   response.TypeID,
-		"data":     utils.Prettify(response.Data),
-		"deviceID": fmt.Sprintf("%04x", response.DeviceID),
-		"loggerID": response.LoggerID,
+		"typeID":   response.TypeID(),
+		"deviceID": fmt.Sprintf("%04x", response.DeviceID()),
+		"loggerID": response.LoggerID(),
 	}).Debug("set response frame")
 
 	err = c.transceiver.SetFrame(response)
@@ -141,7 +138,7 @@ func (c Console) processRequestFrame() {
 		return
 	}
 
-	err = c.transceiver.Set(transceiver.SetTX, []byte{})
+	err = c.transceiver.Set(SetTX, []byte{})
 	if err != nil {
 		logrus.WithError(err).Error("unable to set TX")
 
@@ -150,25 +147,25 @@ func (c Console) processRequestFrame() {
 }
 
 func (c Console) prepareCommunication() {
-	c.transceiver.Set(transceiver.Execute, []byte{0x05})
-	c.transceiver.Set(transceiver.SetPreamblePattern, []byte{0xaa})
-	c.transceiver.Set(transceiver.SetState, []byte{0x00})
+	c.transceiver.Set(Execute, []byte{0x05})
+	c.transceiver.Set(SetPreamblePattern, []byte{0xaa})
+	c.transceiver.Set(SetState, []byte{0x00})
 
 	time.Sleep(1 * time.Second)
-	c.transceiver.Set(transceiver.SetRX, []byte{})
+	c.transceiver.Set(SetRX, []byte{})
 
-	c.transceiver.Set(transceiver.SetPreamblePattern, []byte{0xaa})
-	c.transceiver.Set(transceiver.SetState, []byte{0x1e})
+	c.transceiver.Set(SetPreamblePattern, []byte{0xaa})
+	c.transceiver.Set(SetState, []byte{0x1e})
 
 	time.Sleep(1 * time.Second)
-	c.transceiver.Set(transceiver.SetRX, []byte{})
+	c.transceiver.Set(SetRX, []byte{})
 }
 
 // CorrectFrequency of transceiver to communicate with klimalogg console based on radio frequency band (EU/US)
 func (c Console) CorrectFrequency(baseFrequency float64) error {
 	var initFreq uint32 = uint32(math.Floor(baseFrequency / float64(16000000) * float64(16777216)))
 
-	corr, err := c.transceiver.ReadConfigFlash(transceiver.FrequencyCorrection)
+	corr, err := c.transceiver.ReadConfigFlash(FrequencyCorrection)
 	if err != nil {
 		return err
 	}
@@ -193,7 +190,7 @@ func (c Console) CorrectFrequency(baseFrequency float64) error {
 	}).Debug("correct frequency")
 
 	for k, v := range register {
-		err := c.transceiver.Set(transceiver.WriteRegister, []byte{(k & 0x7f), 0x01, v, 0x00})
+		err := c.transceiver.Set(WriteRegister, []byte{(k & 0x7f), 0x01, v, 0x00})
 		if err != nil {
 			break
 		}
@@ -203,7 +200,7 @@ func (c Console) CorrectFrequency(baseFrequency float64) error {
 }
 
 func (c Console) getTransceiverInfo() (uint16, string, error) {
-	info, err := c.transceiver.ReadConfigFlash(transceiver.TransceiverInfo)
+	info, err := c.transceiver.ReadConfigFlash(TransceiverInfo)
 	if err != nil {
 		return 0, "", err
 	}
