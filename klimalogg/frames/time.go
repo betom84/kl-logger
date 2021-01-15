@@ -2,8 +2,6 @@ package frames
 
 import (
 	"time"
-
-	"github.com/betom84/kl-logger/utils"
 )
 
 // SendTimeFrame to send time to klimalogg console
@@ -32,13 +30,13 @@ func (f SendTimeFrame) SetTime(t time.Time) {
 		weekday = 7
 	}
 
-	hexDay := utils.ToHexNumber(uint(t.Day()))
-	hexMonth := utils.ToHexNumber(uint(t.Month()))
-	hexYear := utils.ToHexNumber(uint(t.Year() - 2000))
+	hexDay := toHexNumber(uint(t.Day()))
+	hexMonth := toHexNumber(uint(t.Month()))
+	hexYear := toHexNumber(uint(t.Year() - 2000))
 
-	f.SetFrame[9] = utils.ToHexNumber(uint(t.Second()))
-	f.SetFrame[10] = utils.ToHexNumber(uint(t.Minute()))
-	f.SetFrame[11] = utils.ToHexNumber(uint(t.Hour()))
+	f.SetFrame[9] = toHexNumber(uint(t.Second()))
+	f.SetFrame[10] = toHexNumber(uint(t.Minute()))
+	f.SetFrame[11] = toHexNumber(uint(t.Hour()))
 	f.SetFrame[12] = (hexDay << 4) | byte(weekday)
 	f.SetFrame[13] = (hexMonth << 4) | (hexDay >> 4)
 	f.SetFrame[14] = (hexYear << 4) | (hexMonth >> 4)

@@ -50,22 +50,22 @@ func (f ConfigResponseFrame) Settings() Settings {
 
 func (f ConfigResponseFrame) TemperatureMax(sensor int) float32 {
 	offset := 11 + (sensor * 3)
-	return utils.ToTemperature(f.GetFrame[offset:offset+2], 1)
+	return toTemperature(f.GetFrame[offset:offset+2], 1)
 }
 
 func (f ConfigResponseFrame) TemperatureMin(sensor int) float32 {
 	offset := 12 + (sensor * 3)
-	return utils.ToTemperature(f.GetFrame[offset:offset+2], 2)
+	return toTemperature(f.GetFrame[offset:offset+2], 2)
 }
 
 func (f ConfigResponseFrame) HumidityMax(sensor int) uint {
 	offset := 38 + (sensor * 2)
-	return utils.ToHumidity(f.GetFrame[offset])
+	return toHumidity(f.GetFrame[offset])
 }
 
 func (f ConfigResponseFrame) HumidityMin(sensor int) uint {
 	offset := 39 + (sensor * 2)
-	return utils.ToHumidity(f.GetFrame[offset])
+	return toHumidity(f.GetFrame[offset])
 }
 
 func (f ConfigResponseFrame) Description(sensor int) string {

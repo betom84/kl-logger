@@ -1,9 +1,5 @@
 package frames
 
-import (
-	"github.com/betom84/kl-logger/utils"
-)
-
 // CurrentWeatherRequestFrame to ask klimalogg console for current weather data
 type CurrentWeatherRequestFrame struct {
 	SetFrame
@@ -63,25 +59,25 @@ func (f CurrentWeatherResponseFrame) SignalQuality() int {
 }
 
 func (f CurrentWeatherResponseFrame) HumidityMax(sensor int) uint {
-	return utils.ToHumidity(f.GetFrame[18])
+	return toHumidity(f.GetFrame[18])
 }
 
 func (f CurrentWeatherResponseFrame) HumidityMin(sensor int) uint {
-	return utils.ToHumidity(f.GetFrame[19])
+	return toHumidity(f.GetFrame[19])
 }
 
 func (f CurrentWeatherResponseFrame) Humidity(sensor int) uint {
-	return utils.ToHumidity(f.GetFrame[20])
+	return toHumidity(f.GetFrame[20])
 }
 
 func (f CurrentWeatherResponseFrame) TemperatureMax(sensor int) float32 {
-	return utils.ToTemperature(f.GetFrame[29:31], 2)
+	return toTemperature(f.GetFrame[29:31], 2)
 }
 
 func (f CurrentWeatherResponseFrame) TemperatureMin(sensor int) float32 {
-	return utils.ToTemperature(f.GetFrame[31:33], 1)
+	return toTemperature(f.GetFrame[31:33], 1)
 }
 
 func (f CurrentWeatherResponseFrame) Temperature(sensor int) float32 {
-	return utils.ToTemperature(f.GetFrame[32:34], 2)
+	return toTemperature(f.GetFrame[32:34], 2)
 }
