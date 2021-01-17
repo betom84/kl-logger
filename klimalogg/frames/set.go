@@ -51,8 +51,8 @@ func NewSetFrame() SetFrame {
 	return f
 }
 
-func (f SetFrame) Length() int {
-	return int(f[2])
+func (f SetFrame) Length() uint8 {
+	return uint8(f[2])
 }
 
 func (f SetFrame) SetDeviceID(deviceID uint16) {
@@ -64,12 +64,12 @@ func (f SetFrame) DeviceID() uint16 {
 	return uint16(f[3])<<8 | uint16(f[4])
 }
 
-func (f SetFrame) SetLoggerID(loggerID int) {
+func (f SetFrame) SetLoggerID(loggerID uint8) {
 	f[5] = byte(loggerID)
 }
 
-func (f SetFrame) LoggerID() int {
-	return int(f[5])
+func (f SetFrame) LoggerID() uint8 {
+	return uint8(f[5])
 }
 
 func (f SetFrame) SetTypeID(typeID SetFrameTypeID) {

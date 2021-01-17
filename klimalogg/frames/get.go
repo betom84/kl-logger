@@ -50,16 +50,16 @@ func NewGetFrame() GetFrame {
 	return GetFrame(f)
 }
 
-func (f GetFrame) Length() int {
-	return int(f[2])
+func (f GetFrame) Length() uint8 {
+	return uint8(f[2])
 }
 
 func (f GetFrame) DeviceID() uint16 {
 	return uint16(f[3])<<8 | uint16(f[4])
 }
 
-func (f GetFrame) LoggerID() int {
-	return int(f[5])
+func (f GetFrame) LoggerID() uint8 {
+	return uint8(f[5])
 }
 
 func (f GetFrame) TypeID() GetFrameTypeID {

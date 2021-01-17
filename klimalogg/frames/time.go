@@ -19,7 +19,7 @@ func NewSendTimeFrame() SendTimeFrame {
 	return SendTimeFrame{f}
 }
 
-func (f SendTimeFrame) SetCfgChecksum(checksum int) {
+func (f SendTimeFrame) SetCfgChecksum(checksum uint16) {
 	f.SetFrame[7] = byte(checksum >> 8)
 	f.SetFrame[8] = byte(checksum)
 }

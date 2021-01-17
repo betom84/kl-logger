@@ -12,6 +12,8 @@ import (
 	"github.com/betom84/kl-logger/klimalogg"
 	"github.com/betom84/kl-logger/repository"
 	"github.com/sirupsen/logrus"
+
+	_ "net/http/pprof"
 )
 
 var (
@@ -79,8 +81,7 @@ func run() error {
 		"productID": fmt.Sprintf("0x%04x", t.ProductID),
 	}).Info("usb transceiver connected")
 
-	c := klimalogg.NewConsole(t)
-	err = c.Initialise(&repository.Default)
+	c, err := klimalogg.NewConsole(t)
 	if err != nil {
 		return err
 	}
@@ -90,6 +91,7 @@ func run() error {
 		logrus.Debug("klimalogg console closed")
 	}()
 
+	c.AddListener(repository.Default.Listen())
 	c.StartCommunication()
 	if err != nil {
 		return err
@@ -97,7 +99,7 @@ func run() error {
 
 	logrus.Info("klimalogg console ready")
 
-	server := api.NewServer(&repository.Default)
+	server := api.NewServer()
 	go func() {
 		logrus.Infof("start api http server on :%d", *apiPort)
 

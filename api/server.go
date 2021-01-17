@@ -17,19 +17,18 @@ type Repository interface {
 
 // Server for klimalogg api
 type Server struct {
-	router     chi.Router
-	repository Repository
+	router chi.Router
 }
 
 // NewServer to serve api endpoints
-func NewServer(repository Repository) *Server {
+func NewServer() *Server {
 	s := &Server{
-		repository: repository,
-		router:     chi.NewRouter(),
+		router: chi.NewRouter(),
 	}
 
 	s.router.Mount("/debug", middleware.Profiler())
-	s.router.Get("/current", getCurrentWeather(s.repository))
+	s.router.Get("/weather", getCurrentWeather())
+	s.router.Get("/config", getCurrentConfig())
 
 	s.router.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)

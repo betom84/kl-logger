@@ -16,7 +16,7 @@ func TestCurrentWeatherResponseFrame(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, 100, frame.SignalQuality())
-	assert.Equal(t, 6833, frame.CfgChecksum())
+	assert.Equal(t, uint16(6833), frame.CfgChecksum())
 	assert.Equal(t, uint(55), frame.Humidity(0))
 	assert.Equal(t, uint(32), frame.HumidityMin(0))
 	assert.Equal(t, uint(98), frame.HumidityMax(0))

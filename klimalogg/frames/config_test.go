@@ -26,20 +26,20 @@ func TestConigResponseData(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, uint16(263), frame.DeviceID())
-	assert.Equal(t, 0, frame.LoggerID())
+	assert.Equal(t, uint8(0), frame.LoggerID())
 	assert.Equal(t, frames.ConfigResponse, frame.TypeID())
-	assert.Equal(t, 125, frame.Length())
+	assert.Equal(t, uint8(125), frame.Length())
 
-	assert.Equal(t, 6833, frame.CfgChecksum())
+	assert.Equal(t, uint16(6833), frame.CfgChecksum())
 	assert.Equal(t, 100, frame.SignalQuality())
 	assert.Equal(t, 0, frame.TimeZone())
 	assert.Equal(t, 0, frame.HistoryIntervall())
 
-	assert.Equal(t, 5, frame.Settings().Contrast)
-	assert.Equal(t, true, frame.Settings().Alert)
-	assert.Equal(t, true, frame.Settings().DCF)
-	assert.Equal(t, "24h", frame.Settings().TimeFormat)
-	assert.Equal(t, "Celcius", frame.Settings().TempFormat)
+	assert.Equal(t, 5, frame.Contrast())
+	assert.Equal(t, true, frame.IsAlarmEnabled())
+	assert.Equal(t, true, frame.IsDCFEnabled())
+	assert.Equal(t, "24h", frame.TimeFormat())
+	assert.Equal(t, "Celcius", frame.TempFormat())
 
 	for sensor := 0; sensor <= 8; sensor++ {
 		assert.Equal(t, float32(0), frame.TemperatureMin(sensor))
@@ -71,7 +71,7 @@ func TestFirstConfigResponse(t *testing.T) {
 	frame := frames.NewFirstConfigRequestFrame()
 
 	assert.Equal(t, uint16(0xffff), frame.DeviceID())
-	assert.Equal(t, 0, frame.LoggerID())
+	assert.Equal(t, uint8(0), frame.LoggerID())
 
 	actual, err := frame.MarshalBinary()
 	expected := []byte{0xd5, 0x0, 0x0b, 0xf0, 0xf0, 0xff, 0x3, 0xff, 0xff, 0x80, 0x8, 0xff, 0xff, 0x0}

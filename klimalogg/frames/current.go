@@ -17,7 +17,7 @@ func NewCurrentWeatherRequestFrame() CurrentWeatherRequestFrame {
 	return f
 }
 
-func (f CurrentWeatherRequestFrame) SetCfgChecksum(checksum int) {
+func (f CurrentWeatherRequestFrame) SetCfgChecksum(checksum uint16) {
 	f.SetFrame[7] = byte(checksum >> 8)
 	f.SetFrame[8] = byte(checksum)
 }
@@ -50,8 +50,8 @@ func NewCurrentWeatherResponseFrame() CurrentWeatherResponseFrame {
 	return CurrentWeatherResponseFrame{NewGetFrame()}
 }
 
-func (f CurrentWeatherResponseFrame) CfgChecksum() int {
-	return int(uint16(f.GetFrame[8])<<8 | uint16(f.GetFrame[9]))
+func (f CurrentWeatherResponseFrame) CfgChecksum() uint16 {
+	return uint16(f.GetFrame[8])<<8 | uint16(f.GetFrame[9])
 }
 
 func (f CurrentWeatherResponseFrame) SignalQuality() int {

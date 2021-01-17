@@ -4,15 +4,6 @@ import (
 	"github.com/betom84/kl-logger/utils"
 )
 
-// Settings of klimalogg console
-type Settings struct {
-	Contrast   int
-	Alert      bool
-	DCF        bool
-	TimeFormat string
-	TempFormat string
-}
-
 // ConfigResponseData contains current configuration of klimalogg console
 type ConfigResponseFrame struct {
 	GetFrame
@@ -22,8 +13,8 @@ func NewConfigResponseFrame() ConfigResponseFrame {
 	return ConfigResponseFrame{NewGetFrame()}
 }
 
-func (f ConfigResponseFrame) CfgChecksum() int {
-	return int(uint16(f.GetFrame[126])<<8 | uint16(f.GetFrame[127]))
+func (f ConfigResponseFrame) CfgChecksum() uint16 {
+	return uint16(f.GetFrame[126])<<8 | uint16(f.GetFrame[127])
 }
 
 func (f ConfigResponseFrame) SignalQuality() int {
@@ -38,14 +29,24 @@ func (f ConfigResponseFrame) HistoryIntervall() int {
 	return int(f.GetFrame[10]) * 5
 }
 
-func (f ConfigResponseFrame) Settings() Settings {
-	return Settings{
-		Contrast:   int(f.GetFrame[8] >> 4),
-		Alert:      (f.GetFrame[8] & 0x8) == 0,
-		DCF:        (f.GetFrame[8] & 0x4) != 0,
-		TimeFormat: []string{"24h", "12h"}[(f.GetFrame[8] & 0x2)],
-		TempFormat: []string{"Celcius", "Fahrenheit"}[(f.GetFrame[8] & 0x1)],
-	}
+func (f ConfigResponseFrame) Contrast() int {
+	return int(f.GetFrame[8] >> 4)
+}
+
+func (f ConfigResponseFrame) IsAlarmEnabled() bool {
+	return (f.GetFrame[8] & 0x8) == 0
+}
+
+func (f ConfigResponseFrame) IsDCFEnabled() bool {
+	return (f.GetFrame[8] & 0x4) != 0
+}
+
+func (f ConfigResponseFrame) TimeFormat() string {
+	return []string{"24h", "12h"}[(f.GetFrame[8] & 0x2)]
+}
+
+func (f ConfigResponseFrame) TempFormat() string {
+	return []string{"Celcius", "Fahrenheit"}[(f.GetFrame[8] & 0x1)]
 }
 
 func (f ConfigResponseFrame) TemperatureMax(sensor int) float32 {
@@ -162,7 +163,7 @@ func (f FirstConfigRequestFrame) SetComInterval(interval int) {
 	f.SetFrame[10] = byte(interval)
 }
 
-func (f FirstConfigRequestFrame) SetDeviceID(deviceID int) {
+func (f FirstConfigRequestFrame) SetDeviceID(deviceID uint16) {
 	f.SetFrame[11] = byte(deviceID >> 8)
 	f.SetFrame[12] = byte(deviceID)
 }
@@ -170,10 +171,10 @@ func (f FirstConfigRequestFrame) DeviceID() uint16 {
 	return uint16(f.SetFrame[11])<<8 | uint16(f.SetFrame[12])
 }
 
-func (f FirstConfigRequestFrame) SetLoggerID(loggerID int) {
+func (f FirstConfigRequestFrame) SetLoggerID(loggerID uint8) {
 	f.SetFrame[13] = byte(loggerID)
 }
 
-func (f FirstConfigRequestFrame) LoggerID() int {
-	return int(f.SetFrame[13])
+func (f FirstConfigRequestFrame) LoggerID() uint8 {
+	return uint8(f.SetFrame[13])
 }

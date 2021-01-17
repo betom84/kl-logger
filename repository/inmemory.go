@@ -1,41 +1,69 @@
 package repository
 
-import "time"
+import (
+	"time"
+
+	"github.com/sirupsen/logrus"
+)
 
 // Default repository to store klimalogg data
-var Default = InMemory{}
+var Default = &InMemory{}
 
 // InMemory repository to store data in memory
 type InMemory struct {
 	temperature float32
 	humidity    uint
-	lastUpdate  time.Time
+
+	currentConfig    Configuration
+	lastConfigUpdate time.Time
+
+	currentWeather    WeatherSample
+	lastWeatherUpdate time.Time
 }
 
-// UpdateWeather
-func (r *InMemory) UpdateWeather(temperature float32, humidity uint) {
-	r.temperature = temperature
-	r.humidity = humidity
+func (r *InMemory) Listen() chan<- interface{} {
+	c := make(chan interface{})
 
-	r.lastUpdate = time.Now()
+	go func() {
+		for {
+			i := <-c
+
+			switch t := i.(type) {
+			case WeatherSample:
+				r.updateWeather(t)
+			case Configuration:
+				r.updateConfiguration(t)
+			default:
+				logrus.WithField("interface", i).Warn("repository: unrecognized interface type")
+			}
+		}
+	}()
+
+	return c
 }
 
-// UpdateSettings
-func (r *InMemory) UpdateSettings(contrast int, alert bool, dcf bool, timeFormat string, tempFormat string) {
-	r.lastUpdate = time.Now()
+func (r *InMemory) updateWeather(s WeatherSample) {
+	r.currentWeather = s
+	r.lastWeatherUpdate = time.Now()
 }
 
-// Temperature
-func (r InMemory) Temperature() float32 {
-	return r.temperature
+func (r *InMemory) updateConfiguration(c Configuration) {
+	r.currentConfig = c
+	r.lastConfigUpdate = time.Now()
 }
 
-// Humidity
-func (r InMemory) Humidity() uint {
-	return r.humidity
+func (r InMemory) CurrentWeather() WeatherSample {
+	return r.currentWeather
 }
 
-// LastUpdate
-func (r InMemory) LastUpdate() time.Time {
-	return r.lastUpdate
+func (r InMemory) LastWeatherUpdate() time.Time {
+	return r.lastWeatherUpdate
+}
+
+func (r InMemory) CurrentConfig() Configuration {
+	return r.currentConfig
+}
+
+func (r InMemory) LastConfigUpdate() time.Time {
+	return r.lastConfigUpdate
 }

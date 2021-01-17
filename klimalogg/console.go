@@ -13,41 +13,49 @@ import (
 
 // Console represents a klimalogg console
 type Console struct {
-	LoggerID             uint8
 	transceiver          *Transceiver
-	handler              Handler
 	stopCommunication    chan bool
 	communicationRunning bool
+	listeners            []chan<- interface{}
+	cfgChecksum          uint16
+	deviceID             uint16
+	loggerID             uint8
+	serial               string
 }
 
-// NewConsole using given transceiver
-func NewConsole(t *Transceiver) *Console {
-	return &Console{transceiver: t, handler: Handler{}, LoggerID: 0}
-}
+// NewConsole using given transceiver (default frequency 868MHz)
+func NewConsole(t *Transceiver) (*Console, error) {
+	var err error
 
-// Initialise default klimalogg console (868MHz)
-func (c *Console) Initialise(repository Repository) error {
-	deviceID, serial, err := c.getTransceiverInfo()
+	c := &Console{}
+	c.transceiver = t
+	c.loggerID = 0
+	c.listeners = make([]chan<- interface{}, 0)
+
+	c.deviceID, c.serial, err = c.getTransceiverInfo()
 	if err != nil {
-		return fmt.Errorf("failed to read transceiver info; %v", err)
+		return nil, fmt.Errorf("failed to read transceiver info; %v", err)
 	}
 
-	c.handler.DeviceID = deviceID
-	c.handler.LoggerID = c.LoggerID
-	c.handler.Repostitory = repository
-
 	logrus.WithFields(logrus.Fields{
-		"deviceID": fmt.Sprintf("%d (%04x)", c.handler.DeviceID, c.handler.DeviceID),
-		"loggerID": c.handler.LoggerID,
-		"serial":   serial,
+		"deviceID": fmt.Sprintf("%d (%04x)", c.deviceID, c.deviceID),
+		"loggerID": 0,
+		"serial":   c.serial,
 	}).Debug("initialise klimalogg console")
 
 	err = c.CorrectFrequency(float64(868300000))
-	if err != nil {
-		return fmt.Errorf("failed to correct frequency; %v", err)
-	}
+	return c, err
+}
 
-	return nil
+// AddListener to receive weather- and config updates from klimalogg console
+func (c *Console) AddListener(l chan<- interface{}) {
+	c.listeners = append(c.listeners, l)
+}
+
+func (c *Console) notifyListeners(f interface{}) {
+	for _, l := range c.listeners {
+		l <- f
+	}
 }
 
 // Close klimalogg console, stop running communication
@@ -86,7 +94,7 @@ func (c *Console) StartCommunication() error {
 				}
 			}
 
-			c.processRequestFrame()
+			c.processCurrentFrame()
 
 			//nextReadinessProbe = time.NewTicker(75 * time.Millisecond)
 		}
@@ -96,54 +104,96 @@ func (c *Console) StartCommunication() error {
 	return nil
 }
 
-func (c Console) processRequestFrame() {
-	request := frames.NewGetFrame()
-	err := c.transceiver.GetFrame(&request)
+func (c Console) processCurrentFrame() {
+	current := frames.NewGetFrame()
+	err := c.transceiver.GetFrame(&current)
 	if err != nil {
-		logrus.WithError(err).Error("unable to get request frame")
+		logrus.WithError(err).Error("unable to get current frame")
 
 		return
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"typeID":   request.TypeID(),
-		"deviceID": fmt.Sprintf("%04x", request.DeviceID()),
-		"loggerID": request.LoggerID(),
+		"typeID":   current.TypeID(),
+		"deviceID": fmt.Sprintf("%04x", current.DeviceID()),
+		"loggerID": current.LoggerID(),
 	}).Debug("handle frame")
 
-	response, err := c.handler.HandleRequest(request)
+	next, err := c.handleFrame(current)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"error":   err,
-			"request": request,
-		}).Error("failed to handle request frame")
+			"current": current,
+		}).Error("failed to handle current frame")
 
 		return
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"typeID":   response.TypeID(),
-		"deviceID": fmt.Sprintf("%04x", response.DeviceID()),
-		"loggerID": response.LoggerID(),
-	}).Debug("set response frame")
+		"typeID":   next.TypeID(),
+		"deviceID": fmt.Sprintf("%04x", next.DeviceID()),
+		"loggerID": next.LoggerID(),
+	}).Debug("set next frame")
 
-	err = c.transceiver.SetFrame(response)
+	err = c.transceiver.SetFrame(next)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
-			"error":    err,
-			"request":  request,
-			"response": response,
-		}).Error("unable to set response frame")
+			"error":   err,
+			"current": current,
+			"next":    next,
+		}).Error("failed to set next frame")
 
 		return
 	}
 
 	err = c.transceiver.Set(SetTX, []byte{})
 	if err != nil {
-		logrus.WithError(err).Error("unable to set TX")
+		logrus.WithError(err).Error("failed to set TX")
 
 		return
 	}
+}
+
+func (c *Console) handleFrame(curr frames.GetFrame) (*frames.SetFrame, error) {
+	var next *frames.SetFrame
+
+	switch curr.TypeID() {
+	case frames.CurrentWeatherResponse:
+		c.notifyListeners(frames.CurrentWeatherResponseFrame{GetFrame: curr})
+
+	case frames.ConfigResponse:
+		f := frames.ConfigResponseFrame{GetFrame: curr}
+		c.cfgChecksum = f.CfgChecksum()
+		c.notifyListeners(f)
+
+	case frames.RequestFirstConfigResponse:
+		f := frames.NewFirstConfigRequestFrame()
+		f.SetDeviceID(c.deviceID)
+		f.SetLoggerID(c.loggerID)
+		next = &f.SetFrame
+
+	case frames.RequestTimeResponse:
+		f := frames.NewSendTimeFrame()
+		f.SetDeviceID(c.deviceID)
+		f.SetLoggerID(c.loggerID)
+		f.SetCfgChecksum(c.cfgChecksum)
+		f.SetTime(time.Now())
+		next = &f.SetFrame
+
+	default:
+		logrus.WithField("frame", curr).Warn("handle unsupported frame type")
+	}
+
+	if next != nil {
+		return next, nil
+	}
+
+	currWeather := frames.NewCurrentWeatherRequestFrame()
+	currWeather.SetCfgChecksum(c.cfgChecksum)
+	currWeather.SetDeviceID(c.deviceID)
+	currWeather.SetLoggerID(c.loggerID)
+
+	return &currWeather.SetFrame, nil
 }
 
 func (c Console) prepareCommunication() {

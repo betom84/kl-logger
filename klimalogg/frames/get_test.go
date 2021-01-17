@@ -17,9 +17,9 @@ func TestGetFrame(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, uint16(0x0107), frame.DeviceID())
-	assert.Equal(t, 0, frame.LoggerID())
+	assert.Equal(t, uint8(0), frame.LoggerID())
 	assert.Equal(t, frames.CurrentWeatherResponse, frame.TypeID())
-	assert.Equal(t, 229, frame.Length())
+	assert.Equal(t, uint8(229), frame.Length())
 
 	assert.Equal(t, "GetFrame{Length:229 DeviceID:0x0107 LoggerID:00 TypeID:CurrentWeatherResponse (0x30)}", frame.String())
 }
