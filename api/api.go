@@ -3,8 +3,11 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/betom84/kl-logger/klimalogg"
 	"github.com/betom84/kl-logger/repository"
 )
 
@@ -111,6 +114,30 @@ func getCurrentConfig() http.HandlerFunc {
 		}
 
 		json.NewEncoder(w).Encode(response)
+		w.Header().Set("Content-Type", "application/json")
+	}
+}
+
+func getTransceiverTrace(t *klimalogg.Transceiver) http.HandlerFunc {
+	transceiver := t
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		s, err := strconv.Atoi(r.URL.Query().Get("seconds"))
+		if err != nil || s == 0 {
+			s = 5
+		}
+
+		b := strings.Builder{}
+		b.WriteString("{ \"trace\": [")
+
+		transceiver.StartTracing(&b)
+		time.Sleep(time.Duration(s) * time.Second)
+		transceiver.StopTracing()
+
+		b.WriteString("{}]}")
+
+		strings.NewReplacer("\n", ",").WriteString(w, b.String())
+
 		w.Header().Set("Content-Type", "application/json")
 	}
 }

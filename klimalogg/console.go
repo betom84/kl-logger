@@ -264,3 +264,8 @@ func (c Console) getTransceiverInfo() (uint16, string, error) {
 
 	return deviceID, strings.Join(serial, ""), nil
 }
+
+// Transceiver used to communicate with klimalogg console
+func (c Console) Transceiver() *Transceiver {
+	return c.transceiver
+}

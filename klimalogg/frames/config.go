@@ -1,7 +1,7 @@
 package frames
 
 import (
-	"github.com/betom84/kl-logger/utils"
+	"encoding/hex"
 )
 
 // ConfigResponseData contains current configuration of klimalogg console
@@ -76,7 +76,7 @@ func (f ConfigResponseFrame) Description(sensor int) string {
 
 	// todo
 	offset := 61 + (sensor * 8)
-	return string(utils.Dump(f.GetFrame[offset : offset+8]))
+	return string(hex.EncodeToString(f.GetFrame[offset : offset+8]))
 }
 
 func (f ConfigResponseFrame) IsTemperatureMaxAlarmSet(sensor int) bool {

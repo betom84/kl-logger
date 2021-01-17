@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/betom84/kl-logger/api"
 	"github.com/betom84/kl-logger/klimalogg"
@@ -19,6 +20,7 @@ import (
 var (
 	log      *string = flag.String("log", "stdout", "Logfile")
 	logLevel *string = flag.String("logLevel", "info", "Log level (e.g. error, info, debug, trace)")
+	usbTrace *bool   = flag.Bool("usbTrace", false, "Trace usb control messages")
 	apiPort  *int    = flag.Int("apiPort", 8088, "Port to serve http api requests")
 )
 
@@ -67,6 +69,14 @@ func run() error {
 		return err
 	}
 
+	if *usbTrace == true {
+		trace, err := os.OpenFile(fmt.Sprintf("%s_transceiver.trace", time.Now().Format("20060102_15040507")), os.O_CREATE|os.O_RDWR, 0666)
+		if err == nil {
+			t.StartTracing(trace)
+			defer trace.Close()
+		}
+	}
+
 	defer func() {
 		err = t.Close()
 		if err != nil {
@@ -99,7 +109,7 @@ func run() error {
 
 	logrus.Info("klimalogg console ready")
 
-	server := api.NewServer()
+	server := api.NewServer(*c)
 	go func() {
 		logrus.Infof("start api http server on :%d", *apiPort)
 

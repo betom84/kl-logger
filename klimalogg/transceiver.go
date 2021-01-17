@@ -2,10 +2,13 @@ package klimalogg
 
 import (
 	"encoding"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io"
+	"sync"
 	"time"
 
-	"github.com/betom84/kl-logger/utils"
 	"github.com/google/gousb"
 	"github.com/sirupsen/logrus"
 )
@@ -65,11 +68,11 @@ func (m MessageID) String() string {
 }
 
 type message struct {
-	rtype   uint8
-	request uint8
-	value   uint16
-	index   uint16
-	length  uint
+	Rtype   uint8  `json:"rtype"`
+	Request uint8  `json:"request"`
+	Value   uint16 `json:"value"`
+	Index   uint16 `json:"index"`
+	Length  uint   `json:"length"`
 }
 
 var messages = map[MessageID]message{
@@ -107,49 +110,48 @@ type Transceiver struct {
 	device               *gousb.Device
 	defaultInterface     *gousb.Interface
 	defaultInterfaceDone func()
+
+	traceMutex   sync.Mutex
+	traceEncoder *json.Encoder
+}
+
+// NewTransceiver usb device identified by product and vendor ID
+func NewTransceiver(vendorID uint16, productID uint16) *Transceiver {
+	return &Transceiver{
+		VendorID:  vendorID,
+		ProductID: productID,
+	}
 }
 
 // Get message via usb control
-func (t Transceiver) Get(id MessageID) ([]byte, error) {
+func (t *Transceiver) Get(id MessageID) ([]byte, error) {
 	m := messages[id]
-	b := make([]byte, int(m.length))
+	b := make([]byte, int(m.Length))
 
-	len, err := t.device.Control(m.rtype, m.request, m.value, m.index, b)
-
-	if id != GetState {
-		logrus.WithFields(logrus.Fields{
-			"id":   fmt.Sprintf("%02x", byte(id)),
-			"len":  len,
-			"data": utils.Prettify(b),
-		}).Tracef("<- %s", id)
-	}
+	len, err := t.device.Control(m.Rtype, m.Request, m.Value, m.Index, b)
+	t.traceControl(id, m, b, len, err)
 
 	return b, err
 }
 
 // Set message via usb control
-func (t Transceiver) Set(id MessageID, data []byte) error {
+func (t *Transceiver) Set(id MessageID, data []byte) error {
 	m := messages[id]
-	b := make([]byte, int(m.length))
+	b := make([]byte, int(m.Length))
 	b[0] = byte(id)
 
 	for idx, d := range data {
 		b[idx+1] = d
 	}
 
-	len, err := t.device.Control(m.rtype, m.request, m.value, m.index, b)
-
-	logrus.WithFields(logrus.Fields{
-		"id":   fmt.Sprintf("%02x", byte(id)),
-		"len":  len,
-		"data": utils.Prettify(b),
-	}).Tracef("-> %s", id)
+	len, err := t.device.Control(m.Rtype, m.Request, m.Value, m.Index, b)
+	t.traceControl(id, m, b, len, err)
 
 	return err
 }
 
 // GetFrame message via usb control
-func (t Transceiver) GetFrame(unmarshaler encoding.BinaryUnmarshaler) error {
+func (t *Transceiver) GetFrame(unmarshaler encoding.BinaryUnmarshaler) error {
 	b, err := t.Get(GetFrame)
 	if err != nil {
 		return err
@@ -159,7 +161,7 @@ func (t Transceiver) GetFrame(unmarshaler encoding.BinaryUnmarshaler) error {
 }
 
 // SetFrame message via usb control
-func (t Transceiver) SetFrame(marshaler encoding.BinaryMarshaler) error {
+func (t *Transceiver) SetFrame(marshaler encoding.BinaryMarshaler) error {
 	b, err := marshaler.MarshalBinary()
 	if err != nil {
 		return err
@@ -169,7 +171,7 @@ func (t Transceiver) SetFrame(marshaler encoding.BinaryMarshaler) error {
 }
 
 // IsReady returns true previous message was processed (and response is available)
-func (t Transceiver) IsReady() bool {
+func (t *Transceiver) IsReady() bool {
 	b, err := t.Get(GetState)
 	if err != nil {
 		logrus.WithError(err).Error("transceiver readiness probe failed")
@@ -184,12 +186,12 @@ func (t Transceiver) IsReady() bool {
 	return b[1] == 0x16
 }
 
-func (t Transceiver) String() string {
+func (t *Transceiver) String() string {
 	return t.device.String()
 }
 
 // ReadConfigFlash value from transceiver flash memory
-func (t Transceiver) ReadConfigFlash(value FlashProperty) ([]byte, error) {
+func (t *Transceiver) ReadConfigFlash(value FlashProperty) ([]byte, error) {
 
 	// todo, init buffer with 0xcc (?)
 
@@ -264,13 +266,50 @@ func (t *Transceiver) Close() error {
 		t.context = nil
 	}
 
+	t.StopTracing()
+
 	return nil
 }
 
-// NewTransceiver usb device identified by product and vendor ID
-func NewTransceiver(vendorID uint16, productID uint16) *Transceiver {
-	return &Transceiver{
-		VendorID:  vendorID,
-		ProductID: productID,
+func (t *Transceiver) traceControl(id MessageID, m message, b []byte, len int, err error) {
+	t.traceMutex.Lock()
+	defer t.traceMutex.Unlock()
+
+	if t.traceEncoder == nil {
+		return
 	}
+
+	l := struct {
+		T    int64   `json:"t"`
+		ID   string  `json:"id"`
+		Msg  message `json:"msg"`
+		Data string  `json:"data"`
+		Len  int     `json:"len"`
+		Err  error   `json:"err"`
+	}{
+		T:    time.Now().UnixNano(),
+		ID:   id.String(),
+		Msg:  m,
+		Data: hex.EncodeToString(b),
+		Len:  len,
+		Err:  err,
+	}
+
+	t.traceEncoder.Encode(l)
+}
+
+// StartTracing usb control messages. If traceOut is nil,
+func (t *Transceiver) StartTracing(traceOut io.Writer) {
+	t.traceMutex.Lock()
+	defer t.traceMutex.Unlock()
+
+	t.traceEncoder = json.NewEncoder(traceOut)
+}
+
+// StopTracing usb control messages
+func (t *Transceiver) StopTracing() {
+	t.traceMutex.Lock()
+	defer t.traceMutex.Unlock()
+
+	t.traceEncoder = nil
 }

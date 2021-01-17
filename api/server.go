@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/betom84/kl-logger/klimalogg"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 )
@@ -21,12 +22,14 @@ type Server struct {
 }
 
 // NewServer to serve api endpoints
-func NewServer() *Server {
+func NewServer(console klimalogg.Console) *Server {
 	s := &Server{
 		router: chi.NewRouter(),
 	}
 
-	s.router.Mount("/debug", middleware.Profiler())
+	s.router.Mount("/debug/pprof", middleware.Profiler())
+	s.router.Get("/debug/transceiver/trace", getTransceiverTrace(console.Transceiver()))
+
 	s.router.Get("/weather", getCurrentWeather())
 	s.router.Get("/config", getCurrentConfig())
 
