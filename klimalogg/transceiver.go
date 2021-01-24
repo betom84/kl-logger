@@ -170,7 +170,7 @@ func (t *Transceiver) SetFrame(marshaler encoding.BinaryMarshaler) error {
 	return t.Set(SetFrame, b[1:])
 }
 
-// IsReady returns true previous message was processed (and response is available)
+// IsReady returns true if previous message was processed (and response is available)
 func (t *Transceiver) IsReady() bool {
 	b, err := t.Get(GetState)
 	if err != nil {

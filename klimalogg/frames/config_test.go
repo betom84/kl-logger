@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/betom84/kl-logger/klimalogg/frames"
+	"github.com/betom84/kl-logger/repository"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,8 +23,9 @@ func TestConigResponseData(t *testing.T) {
 
 	frame := frames.NewConfigResponseFrame()
 	err := frame.UnmarshalBinary(sampleFrame)
-
 	assert.NoError(t, err)
+
+	assert.Implements(t, (*repository.Configuration)(nil), frames.NewConfigResponseFrame())
 
 	assert.Equal(t, uint16(263), frame.DeviceID())
 	assert.Equal(t, uint8(0), frame.LoggerID())

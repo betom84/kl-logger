@@ -158,6 +158,7 @@ func (c *Console) handleFrame(curr frames.GetFrame) (*frames.SetFrame, error) {
 	var next *frames.SetFrame
 
 	switch curr.TypeID() {
+
 	case frames.CurrentWeatherResponse:
 		c.notifyListeners(frames.CurrentWeatherResponseFrame{GetFrame: curr})
 

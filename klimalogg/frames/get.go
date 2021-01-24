@@ -75,11 +75,6 @@ func (f *GetFrame) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unexpected length of data; expected %dB, got %dB", len(*f), len(data))
 	}
 
-	if data[0] != byte(0x0) { // klimalogg.GetFrame
-		return fmt.Errorf("data can not be unmarshaled; found unexpected message type 0x%02x", data[0])
-	}
-
 	copy(*f, data)
-	//*f = data
 	return nil
 }

@@ -49,6 +49,14 @@ func (f ConfigResponseFrame) TempFormat() string {
 	return []string{"Celcius", "Fahrenheit"}[(f.GetFrame[8] & 0x1)]
 }
 
+func (f ConfigResponseFrame) SensorMin() int {
+	return 0
+}
+
+func (f ConfigResponseFrame) SensorMax() int {
+	return 8
+}
+
 func (f ConfigResponseFrame) TemperatureMax(sensor int) float32 {
 	offset := 11 + (sensor * 3)
 	return toTemperature(f.GetFrame[offset:offset+2], 1)

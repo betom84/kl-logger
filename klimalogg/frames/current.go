@@ -1,5 +1,7 @@
 package frames
 
+import "time"
+
 // CurrentWeatherRequestFrame to ask klimalogg console for current weather data
 type CurrentWeatherRequestFrame struct {
 	SetFrame
@@ -58,26 +60,68 @@ func (f CurrentWeatherResponseFrame) SignalQuality() int {
 	return int(f.GetFrame[7])
 }
 
+func (f CurrentWeatherResponseFrame) getSensorOffset(sensor int) uint {
+	if sensor < f.SensorMin() || sensor > f.SensorMax() {
+		return 0
+	}
+
+	return uint(24 * sensor)
+}
+
+func (f CurrentWeatherResponseFrame) SensorMin() int {
+	return 0
+}
+
+func (f CurrentWeatherResponseFrame) SensorMax() int {
+	return 8
+}
+
+func (f CurrentWeatherResponseFrame) HumidityMaxTime(sensor int) time.Time {
+	o := f.getSensorOffset(sensor)
+	return toDateTime(f.GetFrame[10+o:14+o], HighNibble)
+}
+
+func (f CurrentWeatherResponseFrame) HumidityMinTime(sensor int) time.Time {
+	o := f.getSensorOffset(sensor)
+	return toDateTime(f.GetFrame[14+o:18+o], HighNibble)
+}
+
 func (f CurrentWeatherResponseFrame) HumidityMax(sensor int) uint {
-	return toHumidity(f.GetFrame[18])
+	o := f.getSensorOffset(sensor)
+	return toHumidity(f.GetFrame[18+o])
 }
 
 func (f CurrentWeatherResponseFrame) HumidityMin(sensor int) uint {
-	return toHumidity(f.GetFrame[19])
+	o := f.getSensorOffset(sensor)
+	return toHumidity(f.GetFrame[19+o])
 }
 
 func (f CurrentWeatherResponseFrame) Humidity(sensor int) uint {
-	return toHumidity(f.GetFrame[20])
+	o := f.getSensorOffset(sensor)
+	return toHumidity(f.GetFrame[20+o])
+}
+
+func (f CurrentWeatherResponseFrame) TemperatureMaxTime(sensor int) time.Time {
+	o := f.getSensorOffset(sensor)
+	return toDateTime(f.GetFrame[21+o:26+o], LowNibble)
+}
+
+func (f CurrentWeatherResponseFrame) TemperatureMinTime(sensor int) time.Time {
+	o := f.getSensorOffset(sensor)
+	return toDateTime(f.GetFrame[25+o:30+o], LowNibble)
 }
 
 func (f CurrentWeatherResponseFrame) TemperatureMax(sensor int) float32 {
-	return toTemperature(f.GetFrame[29:31], 2)
+	o := f.getSensorOffset(sensor)
+	return toTemperature(f.GetFrame[29+o:31+o], LowNibble)
 }
 
 func (f CurrentWeatherResponseFrame) TemperatureMin(sensor int) float32 {
-	return toTemperature(f.GetFrame[31:33], 1)
+	o := f.getSensorOffset(sensor)
+	return toTemperature(f.GetFrame[31+o:33+o], HighNibble)
 }
 
 func (f CurrentWeatherResponseFrame) Temperature(sensor int) float32 {
-	return toTemperature(f.GetFrame[32:34], 2)
+	o := f.getSensorOffset(sensor)
+	return toTemperature(f.GetFrame[32+o:34+o], LowNibble)
 }

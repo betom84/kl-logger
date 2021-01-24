@@ -1,5 +1,7 @@
 package repository
 
+import "time"
+
 type Configuration interface {
 	SignalQuality() int
 	TimeZone() int
@@ -11,6 +13,9 @@ type Configuration interface {
 	IsDCFEnabled() bool
 	TempFormat() string
 	TimeFormat() string
+
+	SensorMin() int
+	SensorMax() int
 
 	Description(int) string
 
@@ -28,12 +33,18 @@ type Configuration interface {
 type WeatherSample interface {
 	SignalQuality() int
 	CfgChecksum() uint16
+	SensorMin() int
+	SensorMax() int
 
 	Temperature(int) float32
 	TemperatureMin(int) float32
+	TemperatureMinTime(int) time.Time
 	TemperatureMax(int) float32
+	TemperatureMaxTime(int) time.Time
 
 	Humidity(int) uint
 	HumidityMin(int) uint
+	HumidityMinTime(int) time.Time
 	HumidityMax(int) uint
+	HumidityMaxTime(int) time.Time
 }
