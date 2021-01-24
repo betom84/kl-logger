@@ -17,17 +17,32 @@ Inspired by https://github.com/matthewwall/weewx-klimalogg
 - to pair console press and hold USB button as described in manual
 - execute kl-logger immediately after console switched into paring mode
 - once console is paired, one can press USB button again to reconnect if connection got lost
-- current weather data is available via http at `http://localhost:8088/current`
+- current weather data is available via http at `http://localhost:8088/weather` (see [Endpoints](#Endpoints) for more)
 
-### Available options
+### Options
 
 ```
 Usage of kl-logger:
   -apiPort int
         Port to serve http api requests (default 8088)
+  -log string
+        Logfile (default "stdout")
   -logLevel string
         Log level (e.g. error, info, debug, trace) (default "info")
+  -usbTrace
+        Trace usb control messages
 ```
+
+### Endpoints
+
+|URI|Description|
+|---|-----------|
+| GET `/weather` | Latest weather information received from paired klimalogg console |
+| GET `/weather/{sensor:[0-8]}` | Latest weather information by sensor id |
+| GET `/config` | Current console configuration |
+| GET `/config/{sensor:[0-8]}` | Current console configuration by sensor id |
+| GET `/debug/transceiver/trace?seconds=5` | Trace usb transceiver control messages |
+| GET `/debug/pprof` | Profiling endpoints provided by go [net/http/pprof](https://pkg.go.dev/net/http/pprof) |
 
 ## Troubleshooting
 

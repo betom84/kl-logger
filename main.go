@@ -109,7 +109,7 @@ func run() error {
 
 	logrus.Info("klimalogg console ready")
 
-	server := api.NewServer(*c)
+	server := api.NewServer(repository.Default, c.Transceiver())
 	go func() {
 		logrus.Infof("start api http server on :%d", *apiPort)
 
