@@ -1,6 +1,7 @@
 package frames
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -40,5 +41,40 @@ func TestToDateTime(t *testing.T) {
 	expected, err = time.Parse("2006-01-02 15:04", "2021-01-14 18:39")
 	assert.NoError(t, err)
 	assert.Equal(t, expected.Format(time.RFC3339), toDateTime([]byte{0x21, 0x11, 0x48, 0xd9}, HighNibble).Format(time.RFC3339))
+}
 
+func TestConvertString(t *testing.T) {
+	tt := []struct {
+		encoded [8]byte
+		decoded string
+	}{
+		{
+			encoded: [8]byte{0x00, 0x00, 0x00, 0x0f, 0x44, 0xb0, 0x7b, 0x44},
+			decoded: "GARAGE",
+		},
+		{
+			encoded: [8]byte{0x0e, 0x06, 0x31, 0x8c, 0xd2, 0x69, 0x5b, 0x45},
+			decoded: "KALLARVIND", // Vetlanda, Sweden
+		},
+		{
+			encoded: [8]byte{0x07, 0xd7, 0xc5, 0x71, 0xd2, 0xe0, 0x7b, 0x08},
+			decoded: "VARDAGSRUM", // Livingroom
+		},
+		/*
+			{
+				encoded: []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x05, 0x00},
+				decoded: "0E05",
+			},
+		*/
+	}
+
+	for _, tc := range tt {
+		t.Run(fmt.Sprintf("Decode %s", tc.decoded), func(t *testing.T) {
+			assert.Equal(t, tc.decoded, toString(tc.encoded))
+		})
+
+		t.Run(fmt.Sprintf("Encode %s", tc.decoded), func(t *testing.T) {
+			assert.Equal(t, tc.encoded, fromString(tc.decoded))
+		})
+	}
 }

@@ -56,6 +56,10 @@ func GetWeather(repo repository.Repository) http.HandlerFunc {
 		weather := repo.Weather()
 		config := repo.Config()
 
+		if weather == nil || config == nil {
+			return
+		}
+
 		sensors := make([]sensorWeather, 0)
 		for sensorID := weather.SensorMin(); sensorID <= weather.SensorMax(); sensorID++ {
 			sensors = append(sensors, newSensorWeather(sensorID, config.Description(sensorID), weather))
@@ -83,6 +87,10 @@ func GetWeatherBySensor(repo repository.Repository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		weather := repo.Weather()
 		config := repo.Config()
+
+		if weather == nil || config == nil {
+			return
+		}
 
 		var sensorID int
 		var err error
@@ -144,6 +152,9 @@ func GetConfig(repo repository.Repository) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		config := repo.Config()
+		if config == nil {
+			return
+		}
 
 		sensors := make([]sensorConfig, 0)
 		for sensorID := 0; sensorID < 9; sensorID++ {
@@ -173,6 +184,9 @@ func GetConfigBySensor(repo repository.Repository) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		config := repo.Config()
+		if config == nil {
+			return
+		}
 
 		var sensorID int
 		if sensorID, err := strconv.Atoi(chi.URLParam(r, "sensor")); err != nil ||

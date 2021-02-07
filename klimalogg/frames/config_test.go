@@ -56,17 +56,10 @@ func TestConigResponseData(t *testing.T) {
 	}
 
 	assert.Equal(t, "INDOOR", frame.Description(0))
-
-	/*
-		assert.Equal(t, "GARAGE", frame.Description(1))
-		assert.Equal(t, "COLD WIND", frame.Description(2))
-		assert.Equal(t, "COLDER", frame.Description(3))
-		assert.Equal(t, "LIVING ROOM", frame.Description(4))
-		assert.Equal(t, "WIND", frame.Description(5))
-		assert.Equal(t, "", frame.Description(6))
-		assert.Equal(t, "", frame.Description(7))
-		assert.Equal(t, "", frame.Description(8))
-	*/
+	assert.Equal(t, "AUSSEN", frame.Description(1))
+	assert.Equal(t, "ALTAR", frame.Description(2))
+	assert.Equal(t, "TURM", frame.Description(3))
+	assert.Equal(t, "ORGEL", frame.Description(4))
 }
 
 func TestFirstConfigResponse(t *testing.T) {

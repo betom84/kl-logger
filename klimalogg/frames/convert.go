@@ -3,6 +3,7 @@ package frames
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 )
 
@@ -14,7 +15,7 @@ const (
 	LowNibble = 2
 )
 
-func toInt(value byte, nibbles ...uint) uint {
+func toInt(value byte, nibbles ...int) uint {
 	high := uint8(value) >> 4
 	low := uint8(value) & 0xf
 
@@ -36,7 +37,7 @@ func toHumidity(value byte) uint {
 	return toInt(value, 1, 2)
 }
 
-func toTemperature(value []byte, startNibble uint) float32 {
+func toTemperature(value []byte, startNibble int) float32 {
 	var t float32
 
 	if startNibble == HighNibble {
@@ -108,4 +109,66 @@ func toDateTime(dt []byte, startNibble uint) time.Time {
 	}
 
 	return t
+}
+
+var charmap = []rune{
+	' ', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+	'0', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
+	'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
+	'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '-', '+', '(',
+	')', 'o', '*', ',', '/', '\\', ' ', '.', ' ', ' ',
+	' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+	' ', ' ', ' ', '@',
+}
+
+func toString(b [8]byte) string {
+	s := strings.Builder{}
+
+	s.WriteString(toSubString(b[6:8], LowNibble))
+	s.WriteString(toSubString(b[5:7], HighNibble))
+	s.WriteString(toSubString(b[3:5], LowNibble))
+	s.WriteString(toSubString(b[2:4], HighNibble))
+	s.WriteString(toSubString(b[0:3], LowNibble))
+
+	return strings.TrimSpace(s.String())
+}
+
+func toSubString(b []byte, startNibble int) string {
+	var idx1, idx2 int
+
+	if startNibble == HighNibble {
+		idx1 = int((b[1]>>2)&0x3C) + int((b[0]>>2)&0x3)
+		idx2 = int((b[0]<<4)&0x30) + int((b[0]>>4)&0xF)
+	} else if startNibble == LowNibble {
+		idx1 = int((b[1]<<2)&0x3C) + int((b[1]>>6)&0x3)
+		idx2 = int(b[1]&0x30) + int(b[0]&0xF)
+	}
+
+	return fmt.Sprintf("%c%c", charmap[idx1], charmap[idx2])
+}
+
+func fromString(str string) [8]byte {
+	chars := "!" + string(charmap[1:])
+
+	s := strings.ReplaceAll(str, " ", "!")
+	for i := len(s); i < 10; i++ {
+		s += "!"
+	}
+
+	cIndices := make([]byte, len(s))
+	for i, c := range s {
+		cIndices[i] = byte(strings.IndexRune(chars, c))
+	}
+
+	result := [8]byte{}
+	result[7] = ((cIndices[0] << 6) & 0xC0) + (cIndices[1] & 0x30) + ((cIndices[0] >> 2) & 0x0F)
+	result[6] = ((cIndices[2] << 2) & 0xF0) + (cIndices[1] & 0x0F)
+	result[5] = ((cIndices[3] << 4) & 0xF0) + ((cIndices[2] << 2) & 0x0C) + ((cIndices[3] >> 4) & 0x03)
+	result[4] = ((cIndices[4] << 6) & 0xC0) + (cIndices[5] & 0x30) + ((cIndices[4] >> 2) & 0x0F)
+	result[3] = ((cIndices[6] << 2) & 0xF0) + (cIndices[5] & 0x0F)
+	result[2] = ((cIndices[7] << 4) & 0xF0) + ((cIndices[6] << 2) & 0x0C) + ((cIndices[7] >> 4) & 0x03)
+	result[1] = ((cIndices[8] << 6) & 0xC0) + (cIndices[9] & 0x30) + ((cIndices[8] >> 2) & 0x0F)
+	result[0] = (cIndices[9] & 0x0F)
+
+	return result
 }

@@ -1,9 +1,5 @@
 package frames
 
-import (
-	"encoding/hex"
-)
-
 // ConfigResponseData contains current configuration of klimalogg console
 type ConfigResponseFrame struct {
 	GetFrame
@@ -82,9 +78,11 @@ func (f ConfigResponseFrame) Description(sensor int) string {
 		return "INDOOR"
 	}
 
-	// todo
-	offset := 61 + (sensor * 8)
-	return string(hex.EncodeToString(f.GetFrame[offset : offset+8]))
+	d := [8]byte{}
+	offset := 61 + ((sensor - 1) * 8)
+	copy(d[:], f.GetFrame[offset:offset+8])
+
+	return toString(d)
 }
 
 func (f ConfigResponseFrame) IsTemperatureMaxAlarmSet(sensor int) bool {
@@ -96,14 +94,15 @@ func (f ConfigResponseFrame) IsTemperatureMaxAlarmSet(sensor int) bool {
 	   Humidity1Max: 00 00 00 00 10
 	   Humidity1Min: 00 00 00 00 20
 	   Temp1Max:     00 00 00 00 40
-	   Temp1Min:     00 00 00 00 8
+	   Temp1Min:     00 00 00 00 80
+	   ...
 	*/
 
 	alarm := f.GetFrame[56:62]
 
 	switch sensor {
 	case 0:
-		return (alarm[4] & 0x04) != 0
+		return (alarm[4] & 0x40) != 0
 	case 1:
 		return (alarm[4] & 0x04) != 0
 	case 2:
