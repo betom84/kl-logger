@@ -13,11 +13,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	vendorID  gousb.ID = 0x6666
-	productID gousb.ID = 0x5555
-)
-
 // MessageID ...
 type MessageID byte
 
@@ -84,8 +79,8 @@ var messages = map[MessageID]message{
 	SetPreamblePattern: {gousb.ControlClass | gousb.ControlInterface, 0x0000009, 0x00003d8, 0x0000000, 0x15},
 	Execute:            {gousb.ControlClass | gousb.ControlInterface, 0x0000009, 0x00003d9, 0x0000000, 0x0f},
 	GetState:           {gousb.ControlClass | gousb.ControlInterface | gousb.ControlIn, 0x01, 0x00003de, 0x0000000, 0x06},
-	ReadConfigFlashIn:  {gousb.ControlClass | gousb.ControlInterface, 0x0000009, 0x00003dd, 0x0000000, 0x0f},
-	ReadConfigFlashOut: {gousb.ControlClass | gousb.ControlInterface | gousb.ControlIn, 0x01, 0x00003dc, 0x0000000, 0x0f},
+	ReadConfigFlashIn:  {gousb.ControlClass | gousb.ControlInterface, 0x0000009, 0x00003dd, 0x0000000, 0x15},
+	ReadConfigFlashOut: {gousb.ControlClass | gousb.ControlInterface | gousb.ControlIn, 0x01, 0x00003dc, 0x0000000, 0x15},
 	WriteRegister:      {gousb.ControlClass | gousb.ControlInterface, 0x0000009, 0x00003f0, 0x0000000, 0x05},
 }
 
