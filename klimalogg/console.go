@@ -70,7 +70,7 @@ func (c *Console) Close() {
 
 // StartCommunication with klimalogg console via transceiver (non-blocking)
 func (c *Console) StartCommunication() error {
-	if c.communicationRunning == true {
+	if c.communicationRunning {
 		return fmt.Errorf("communication already running")
 	}
 

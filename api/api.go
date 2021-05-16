@@ -22,7 +22,7 @@ type sensorWeather struct {
 	TemperatureMaxTime string  `json:"temperatureMaxTime"`
 	Humidity           uint    `json:"humidity"`
 	HumidityMin        uint    `json:"humidityMin"`
-	HumidityMinTime    string  `json:"humidityMinTim"`
+	HumidityMinTime    string  `json:"humidityMinTime"`
 	HumidityMax        uint    `json:"humidityMax"`
 	HumidityMaxTime    string  `json:"humidityMaxTime"`
 }
@@ -62,6 +62,10 @@ func GetWeather(repo repository.Repository) http.HandlerFunc {
 
 		sensors := make([]sensorWeather, 0)
 		for sensorID := weather.SensorMin(); sensorID <= weather.SensorMax(); sensorID++ {
+			if config.Description(sensorID) == "E@@" {
+				continue
+			}
+
 			sensors = append(sensors, newSensorWeather(sensorID, config.Description(sensorID), weather))
 		}
 
@@ -157,7 +161,7 @@ func GetConfig(repo repository.Repository) http.HandlerFunc {
 		}
 
 		sensors := make([]sensorConfig, 0)
-		for sensorID := 0; sensorID < 9; sensorID++ {
+		for sensorID := config.SensorMin(); sensorID < config.SensorMax(); sensorID++ {
 			sensors = append(sensors, newSensorConfig(sensorID, config))
 		}
 
