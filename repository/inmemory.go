@@ -7,7 +7,7 @@ import (
 )
 
 type Repository interface {
-	Listen() chan<- interface{}
+	NewListener() chan<- interface{}
 
 	Weather() WeatherSample
 	LastWeatherUpdate() time.Time
@@ -28,7 +28,7 @@ type InMemory struct {
 	lastWeatherUpdate time.Time
 }
 
-func (r *InMemory) Listen() chan<- interface{} {
+func (r *InMemory) NewListener() chan<- interface{} {
 	c := make(chan interface{})
 
 	go func() {

@@ -36,6 +36,8 @@ type WeatherSample interface {
 	SensorMin() int
 	SensorMax() int
 
+	IsSensorActive(int) bool
+
 	Temperature(int) float32
 	TemperatureMin(int) float32
 	TemperatureMinTime(int) time.Time

@@ -6,3 +6,4 @@
 *.pprof
 *.out
 *.trace
+*.py

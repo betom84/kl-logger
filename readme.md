@@ -43,6 +43,7 @@ Usage of kl-logger:
 | GET `/config/{sensor:[0-8]}`             | Current console configuration by sensor id                                             |
 | GET `/debug/transceiver/trace?seconds=5` | Trace usb transceiver control messages                                                 |
 | GET `/debug/pprof`                       | Profiling endpoints provided by go [net/http/pprof](https://pkg.go.dev/net/http/pprof) |
+| GET `/metrics`                           | Prometheus metrics scrape endpoint                                                     |
 
 ## Docker
 

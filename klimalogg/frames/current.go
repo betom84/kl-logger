@@ -125,3 +125,7 @@ func (f CurrentWeatherResponseFrame) Temperature(sensor int) float32 {
 	o := f.getSensorOffset(sensor)
 	return toTemperature(f.GetFrame[32+o:34+o], LowNibble)
 }
+
+func (f CurrentWeatherResponseFrame) IsSensorActive(sensor int) bool {
+	return f.Temperature(sensor) != 71 && f.Humidity(sensor) != 110
+}
