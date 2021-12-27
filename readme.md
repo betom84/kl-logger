@@ -43,6 +43,14 @@ Usage of kl-logger:
 | GET `/config/{sensor:[0-8]}`             | Current console configuration by sensor id                                             |
 | GET `/debug/transceiver/trace?seconds=5` | Trace usb transceiver control messages                                                 |
 | GET `/debug/pprof`                       | Profiling endpoints provided by go [net/http/pprof](https://pkg.go.dev/net/http/pprof) |
+| GET `/metrics`                           | Prometheus metrics scrape endpoint                                                     |
+
+## Docker
+
+Build and run as docker container:
+
+1. Build `docker build -f docker/kl-logger/Dockerfile -t betom/kl-logger .`
+2. Run `docker run -d -p 8088:8088 --privileged betom/kl-logger` (`--priviliged` is necessary to access hosts usb devices)
 
 ## Troubleshooting
 

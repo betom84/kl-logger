@@ -11,6 +11,7 @@ import (
 
 	"github.com/betom84/kl-logger/api"
 	"github.com/betom84/kl-logger/klimalogg"
+	"github.com/betom84/kl-logger/metrics"
 	"github.com/betom84/kl-logger/repository"
 	"github.com/sirupsen/logrus"
 
@@ -69,7 +70,7 @@ func run() error {
 		return err
 	}
 
-	if *usbTrace == true {
+	if *usbTrace {
 		trace, err := os.OpenFile(fmt.Sprintf("%s_transceiver.trace", time.Now().Format("20060102_15040507")), os.O_CREATE|os.O_RDWR, 0666)
 		if err == nil {
 			t.StartTracing(trace)
@@ -101,7 +102,8 @@ func run() error {
 		logrus.Debug("klimalogg console closed")
 	}()
 
-	c.AddListener(repository.Default.Listen())
+	c.AddListener(repository.Default.NewListener())
+	c.AddListener(metrics.KlimaloggCurrentValuesPublisher())
 	c.StartCommunication()
 	if err != nil {
 		return err
@@ -125,7 +127,7 @@ func run() error {
 }
 
 func waitForSignal() bool {
-	var sigChan = make(chan os.Signal)
+	var sigChan = make(chan os.Signal, 2)
 	signal.Notify(sigChan, syscall.SIGTERM)
 	signal.Notify(sigChan, syscall.SIGINT)
 

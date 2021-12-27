@@ -293,7 +293,7 @@ func (t *Transceiver) traceControl(id MessageID, m message, b []byte, len int, e
 	t.traceEncoder.Encode(l)
 }
 
-// StartTracing usb control messages. If traceOut is nil,
+// StartTracing usb control messages
 func (t *Transceiver) StartTracing(traceOut io.Writer) {
 	t.traceMutex.Lock()
 	defer t.traceMutex.Unlock()

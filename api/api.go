@@ -62,7 +62,7 @@ func GetWeather(repo repository.Repository) http.HandlerFunc {
 
 		sensors := make([]sensorWeather, 0)
 		for sensorID := weather.SensorMin(); sensorID <= weather.SensorMax(); sensorID++ {
-			if config.Description(sensorID) == "E@@" {
+			if config.Description(sensorID) == "E@@" || !weather.IsSensorActive(sensorID) {
 				continue
 			}
 

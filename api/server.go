@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/betom84/kl-logger/metrics"
 	"github.com/betom84/kl-logger/repository"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -18,6 +19,9 @@ func NewServer(repo repository.Repository, transceiver Traceable) *Server {
 	s := &Server{
 		router: chi.NewRouter(),
 	}
+
+	s.router.Use(metrics.HttpMiddleware)
+	s.router.Mount("/metrics", metrics.HttpHandler())
 
 	s.router.Mount("/debug/pprof", middleware.Profiler())
 

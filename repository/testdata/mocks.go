@@ -19,9 +19,9 @@ func MockRepository(w repository.WeatherSample, c repository.Configuration) *Rep
 
 type RepositoryMock struct{ mock.Mock }
 
-func (m *RepositoryMock) Listen() chan<- interface{}   { return nil }
-func (m *RepositoryMock) LastWeatherUpdate() time.Time { return m.Called().Get(0).(time.Time) }
-func (m *RepositoryMock) LastConfigUpdate() time.Time  { return m.Called().Get(0).(time.Time) }
+func (m *RepositoryMock) NewListener() chan<- interface{} { return nil }
+func (m *RepositoryMock) LastWeatherUpdate() time.Time    { return m.Called().Get(0).(time.Time) }
+func (m *RepositoryMock) LastConfigUpdate() time.Time     { return m.Called().Get(0).(time.Time) }
 func (m *RepositoryMock) Weather() repository.WeatherSample {
 	return m.Called().Get(0).(repository.WeatherSample)
 }
@@ -40,6 +40,7 @@ func MockWeatherSample(cb func(*WeatherSampleMock)) *WeatherSampleMock {
 	m.On("CfgChecksum").Maybe().Return(0xabcd)
 	m.On("SensorMin").Maybe().Return(0)
 	m.On("SensorMax").Maybe().Return(8)
+	m.On("IsSensorActive").Maybe().Return(true)
 	m.On("Temperature", mock.Anything).Maybe().Return(float32(+20.0))
 	m.On("TemperatureMax", mock.Anything).Maybe().Return(float32(+30.0))
 	m.On("TemperatureMin", mock.Anything).Maybe().Return(float32(-10.0))
@@ -60,6 +61,7 @@ func (m *WeatherSampleMock) SignalQuality() int           { return m.Called().Ge
 func (m *WeatherSampleMock) CfgChecksum() uint16          { return m.Called().Get(0).(uint16) }
 func (m *WeatherSampleMock) SensorMin() int               { return m.Called().Get(0).(int) }
 func (m *WeatherSampleMock) SensorMax() int               { return m.Called().Get(0).(int) }
+func (m *WeatherSampleMock) IsSensorActive(s int) bool    { return m.Called().Get(0).(bool) }
 func (m *WeatherSampleMock) Temperature(s int) float32    { return m.Called(s).Get(0).(float32) }
 func (m *WeatherSampleMock) TemperatureMin(s int) float32 { return m.Called(s).Get(0).(float32) }
 func (m *WeatherSampleMock) TemperatureMinTime(s int) time.Time {

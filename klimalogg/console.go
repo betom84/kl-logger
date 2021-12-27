@@ -8,6 +8,7 @@ import (
 
 	"github.com/betom84/kl-logger/klimalogg/ax5051"
 	"github.com/betom84/kl-logger/klimalogg/frames"
+	"github.com/betom84/kl-logger/metrics"
 	"github.com/sirupsen/logrus"
 )
 
@@ -112,6 +113,8 @@ func (c Console) processCurrentFrame() {
 
 		return
 	}
+
+	metrics.CollectConsoleFrame(current)
 
 	logrus.WithFields(logrus.Fields{
 		"typeID":   current.TypeID(),
