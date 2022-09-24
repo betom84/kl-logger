@@ -34,7 +34,7 @@ func toInt(value byte, nibbles ...int) uint {
 }
 
 func toHumidity(value byte) uint {
-	return toInt(value, 1, 2)
+	return toInt(value, HighNibble, LowNibble)
 }
 
 func toTemperature(value []byte, startNibble int) float32 {

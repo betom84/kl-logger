@@ -1,0 +1,68 @@
+@startuml
+start
+
+:t1 = 75ms
+t2 = 5ms;
+
+repeat
+    :sleep t1;
+
+    while (GetState)
+        if (error) then (true)
+            :sleep 5000ms;
+        else (false)
+            :sleep t2;
+        endif
+    endwhile (state = 0x16)
+
+    if (GetFrame) then (DataWritten)
+        :SetRx;
+    else 
+        switch ()
+        case (CurrentWeatherResponse)
+            :Process current weather data;
+            :t2 = 10ms;
+            if (Config checksum missmatch?) then (yes)
+                if (Changed on console?) then (yes)
+                    :nextFrame = ConfigRequest;
+                elseif (Changed locally?) then (yes)
+                    :nextFrame = SetConfigRequest;
+                endif
+            else (no)
+                :nextFrame = HistoryRequest;
+            endif
+        case (HistoryResponse)
+            :Process history data;
+            :t2 = 10ms
+            nextFrame = HistoryRequest;
+        case (ConfigResponse)
+            :Process config data;
+            :t2 = 10ms
+            nextFrame = HistoryRequest;
+        case (RequestHistoryResponse)
+            :t1 = 75ms
+            t2 = 5ms
+            nextFrame = HistoryRequest;
+        case (RequestFirstConfigResponse)
+            :t1 = 75ms
+            t2 = 5ms
+            nextFrame = FirstConfigResponse???;
+        case (RequestConfigResponse)
+            :t1 = 75ms
+            t2 = 5ms
+            nextFrame = SendConfig;
+        case (RequestTimeResponse)
+            :t1 = 75ms
+            t2 = 5ms
+            nextFrame = SendTime;
+        case (Default)
+            :t2 = 10ms
+            nextFrame = HistoryRequest;
+        endswitch
+        :SetFrame(nextFrame);
+        :SetTx;
+    endif
+
+repeat while (running?) is (true)
+stop
+@enduml
